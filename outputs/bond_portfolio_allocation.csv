@@ -1,0 +1,6 @@
+Bond,Role,Units_Purchased,Price_Per_Unit_USD,Total_Cost_USD,Weight_in_Bond_Portfolio_Pct,Weight_in_Total_12M_Fund_Pct
+Alpha,Not Selected (1Y maturity not needed),0.0,958.77,0.0,0.0,0.0
+Beta,2024 Scholarship Liability Matching (2Y Zero-Coupon),2278.26087,922.78,2102333.57,38.0,17.52
+Gamma,Not Selected (3Y maturity does not match liability dates),0.0,1002.49,0.0,0.0,0.0
+Delta,2027 Learning Centre Liability Matching (5Y 3.5% Coupon),3478.26087,986.07,3429808.7,62.0,28.58
+Epsilon,Not Selected (8Y maturity exposes 2027 payment to resale price risk),0.0,1040.71,0.0,0.0,0.0

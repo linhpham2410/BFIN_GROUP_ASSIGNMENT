@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import brentq, minimize
 
-# ==============================================================================
+
 def load_case_bonds(filepath="case_bonds.csv"):
     if not os.path.exists(filepath):
         print(f"[INFO] NOT FOUND '{filepath}'. LOADING...")
@@ -37,7 +37,7 @@ def load_case_bonds(filepath="case_bonds.csv"):
     if "Face_Value" not in df.columns:
         df["Face_Value"] = 1000.0
 
-    # Chuẩn hóa kiểu dữ liệu
+
     if df["Price"].dtype == object:
         df["Price"] = df["Price"].astype(str).str.replace(",", "").str.replace("$", "").astype(float)
     if df["Coupon"].dtype == object:
@@ -45,13 +45,13 @@ def load_case_bonds(filepath="case_bonds.csv"):
 
     df["Maturity"] = df["Maturity"].astype(str).str.extract(r"(\d+)").astype(int)
 
-    #ROUND NUMBER
+
     if df["Coupon"].max() > 0.5:
         df["Coupon"] = df["Coupon"] / 100.0
 
     return df[["Bond", "Maturity", "Coupon", "Price", "Face_Value"]]
 
-# ==============================================================================
+
 def get_bond_cash_flows(coupon_rate, maturity, face_value=1000.0):
     times = np.arange(1, int(maturity) + 1, dtype=float)
     cfs = np.full(int(maturity), coupon_rate * face_value, dtype=float)
@@ -84,13 +84,13 @@ def calculate_bond_metrics(df_bonds):
         times, cfs = get_bond_cash_flows(c, T, F)
         pv_cfs = cfs / ((1.0 + ytm) ** times)
 
-        # Macaulay Duration: Sum (t * PV(CF_t)) / Price
+
         mac_duration = np.sum(times * pv_cfs) / P
 
-        # Modified Duration: Macaulay Duration / (1 + YTM)
+    
         mod_duration = mac_duration / (1.0 + ytm)
 
-        # Convexity: Sum [t * (t + 1) * PV(CF_t)] / [Price * (1 + YTM)^2]
+    
         convexity = np.sum(times * (times + 1.0) * pv_cfs) / (P * ((1.0 + ytm) ** 2))
 
         results.append({
@@ -107,23 +107,23 @@ def calculate_bond_metrics(df_bonds):
 
     return pd.DataFrame(results)
 
-# ==============================================================================
+
 def bootstrap_incomplete_spot_curve(df_bonds):
     prices = dict(zip(df_bonds["Maturity"], df_bonds["Price"]))
     coupons = dict(zip(df_bonds["Maturity"], df_bonds["Coupon"] * df_bonds["Face_Value"]))
     F = 1000.0
 
     spot_rates = {}
-    # Year 1 (Alpha - Zero coupon)
+
     spot_rates[1] = (F / prices[1]) ** (1.0 / 1.0) - 1.0
-    # Year 2 (Beta - Zero coupon)
+
     spot_rates[2] = (F / prices[2]) ** (1.0 / 2.0) - 1.0
-    # Year 3 (Gamma - 4% coupon)
+ 
     c3 = coupons[3]
     pv_1_2 = c3 / (1 + spot_rates[1]) + c3 / ((1 + spot_rates[2]) ** 2)
     spot_rates[3] = ((F + c3) / (prices[3] - pv_1_2)) ** (1.0 / 3.0) - 1.0
 
-    # Year 5 (Delta): s4 = 0.5 * (s3 + s5)
+
     c5 = coupons[5]
     def eq_s5(s5):
         s4 = 0.5 * (spot_rates[3] + s5)
@@ -137,7 +137,7 @@ def bootstrap_incomplete_spot_curve(df_bonds):
     spot_rates[5] = brentq(eq_s5, 0.0, 0.5, xtol=1e-12)
     spot_rates[4] = 0.5 * (spot_rates[3] + spot_rates[5])
 
-    # Year 8 (Epsilon)
+  
     c8 = coupons[8]
     def eq_s8(s8):
         s6 = spot_rates[5] + (1.0 / 3.0) * (s8 - spot_rates[5])
@@ -163,7 +163,7 @@ def bootstrap_incomplete_spot_curve(df_bonds):
     })
     return spot_rates, df_curve
 
-# ==============================================================================
+
 def evaluate_rate_scenarios(df_bonds, df_metrics, spot_rates):
     parallel_records = []
     shocks_bps = [-100, +100, +200]  # -1%, +1%, +2%
@@ -179,14 +179,14 @@ def evaluate_rate_scenarios(df_bonds, df_metrics, spot_rates):
 
         for bps in shocks_bps:
             dy = bps / 10000.0
-            # Exact repricing
+            
             P_exact = bond_price_from_ytm(y0 + dy, c, T, 1000.0)
             exact_pct_change = (P_exact - P0) / P0 * 100.0
 
-            # Duration Approximation
+         
             dur_approx_pct = (-D_mod * dy) * 100.0
 
-            # Approximate Duration + Convexity
+         
             dur_conv_approx_pct = (-D_mod * dy + 0.5 * Conv * (dy ** 2)) * 100.0
 
             parallel_records.append({
@@ -200,7 +200,7 @@ def evaluate_rate_scenarios(df_bonds, df_metrics, spot_rates):
                 "Approx_Error_bps": round((dur_conv_approx_pct - exact_pct_change) * 100, 4)
             })
 
-    # Curve Shape Change / Non-Parallel Shift
+   
     curve_records = []
     for scenario_name, s1_bps, s8_bps in [
         ("Steepening (-50bps short, +100bps long)", -50, +100),
@@ -233,25 +233,22 @@ def evaluate_rate_scenarios(df_bonds, df_metrics, spot_rates):
     return pd.DataFrame(parallel_records), pd.DataFrame(curve_records)
 
 
-# ==============================================================================
-# 5. LIABILITY MATCHING
-# ==============================================================================
 def design_and_simulate_liability_portfolio(df_bonds):
-    LIABILITY_2024 = 2_400_000.0  # Năm 2
-    LIABILITY_2027 = 3_600_000.0  # Năm 5
+    LIABILITY_2024 = 2_400_000.0 
+    LIABILITY_2027 = 3_600_000.0  
     TOTAL_FUND = 12_000_000.0
 
     bonds_dict = df_bonds.set_index("Bond").to_dict(orient="index")
 
-    # 1. Trả chính xác 3,600,000 USD vào ngày 31/12/2027 (Năm 5) bằng trái phiếu Delta
+
     delta_cf_year5 = 1000.0 * (1.0 + bonds_dict["Delta"]["Coupon"])
     units_delta = LIABILITY_2027 / delta_cf_year5
     cost_delta = units_delta * bonds_dict["Delta"]["Price"]
 
-    # Tiền lãi coupon hàng năm nhận được từ Delta (từ năm 1 đến năm 4)
+
     annual_delta_coupon = units_delta * (1000.0 * bonds_dict["Delta"]["Coupon"])
 
-    # 2. Trả chính xác 2,400,000 USD vào ngày 31/12/2024 (Năm 2) bằng coupon Delta + đáo hạn Beta
+   
     remaining_2024_obligation = LIABILITY_2024 - annual_delta_coupon
     units_beta = remaining_2024_obligation / 1000.0
     cost_beta = units_beta * bonds_dict["Beta"]["Price"]
@@ -259,7 +256,7 @@ def design_and_simulate_liability_portfolio(df_bonds):
     total_bond_cost = cost_beta + cost_delta
     remaining_for_growth = TOTAL_FUND - total_bond_cost
 
-    # Lập bảng phân bổ danh mục trái phiếu
+
     df_allocation = pd.DataFrame([
         {
             "Bond": "Alpha",
@@ -308,7 +305,7 @@ def design_and_simulate_liability_portfolio(df_bonds):
         }
     ])
 
-    # Lập bảng mô phỏng dòng tiền từng năm từ 2023 đến 2027
+
     years = [1, 2, 3, 4, 5]
     dates = ["31/12/2023", "31/12/2024", "31/12/2025", "31/12/2026", "31/12/2027"]
     obligations = [0.0, LIABILITY_2024, 0.0, 0.0, LIABILITY_2027]
@@ -353,22 +350,20 @@ def design_and_simulate_liability_portfolio(df_bonds):
     return df_allocation, df_cashflow_sim, summary_info
 
 
-# ==============================================================================
-# 6. Xuất TOÀN BỘ PHÂN TÍCH & XUẤT BÁO CÁO
-# ==============================================================================
+
 def main():
     print("=" * 85)
     print("KAPPA FOUNDATION - BOND VALUATION & FUNDING RISK ANALYSIS (31 DEC 2022)")
     print("=" * 85)
 
-    # Step 1: Analysis
+    
     df_bonds = load_case_bonds("case_bonds.csv")
 
-    # Step 2: Calculate YTM, Duration, Convexity
+    
     df_metrics = calculate_bond_metrics(df_bonds)
     spot_rates, df_spot_curve = bootstrap_incomplete_spot_curve(df_bonds)
 
-    # Ghép Spot Rate tương ứng với kỳ hạn của từng mã trái phiếu vào bảng chính
+
     df_metrics["Bootstrapped_Spot_Pct"] = df_metrics["Maturity_Years"].map(
         lambda t: round(spot_rates[int(t)] * 100, 4)
     )
@@ -384,7 +379,7 @@ def main():
     print("\n[2] BOOTSTRAPPED & INTERPOLATED SPOT CURVE (YEARS 1 TO 8):")
     print(df_spot_curve.to_string(index=False))
 
-    # Bước 3: Kiểm định Duration-Convexity vs Exact Repricing
+
     df_parallel, df_curve_shift = evaluate_rate_scenarios(df_bonds, df_metrics, spot_rates)
     print("\n[3] DURATION-CONVEXITY APPROXIMATION VS. EXACT REPRICING (PARALLEL SHIFT):")
     print(df_parallel.to_string(index=False))
@@ -392,7 +387,7 @@ def main():
     print("\n[4] CURVE SHAPE SCENARIOS (STEEPENING & FLATTENING):")
     print(df_curve_shift.to_string(index=False))
 
-    # Bước 4: Thiết kế danh mục & Mô phỏng dòng tiền trả nợ
+
     df_alloc, df_cf_sim, summary = design_and_simulate_liability_portfolio(df_bonds)
 
     print("\n[5] BOND PORTFOLIO ALLOCATION & DEDICATED CASH-FLOW MATCHING:")
@@ -407,7 +402,7 @@ def main():
     print("\n[6] LIABILITY CASH-FLOW MATCHING SIMULATION (2023 - 2027):")
     print(df_cf_sim.to_string(index=False))
 
-    # Kiểm định tự động (Assertions) để chứng minh không bị thiếu hụt
+
     inflow_2024 = df_cf_sim.loc[df_cf_sim["Year"] == 2, "Total_Bond_Inflow_USD"].values[0]
     inflow_2027 = df_cf_sim.loc[df_cf_sim["Year"] == 5, "Total_Bond_Inflow_USD"].values[0]
     max_shortfall = df_cf_sim["Shortfall_USD"].max()

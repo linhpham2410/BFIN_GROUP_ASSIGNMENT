@@ -1,0 +1,9 @@
+Year,Spot_Rate_Pct,Method
+1,4.3003,Exact (Alpha)
+2,4.1,Exact (Beta)
+3,3.9,Bootstrapped (Gamma)
+4,3.85,Linear Interpolated
+5,3.8001,Bootstrapped (Delta)
+6,3.8333,Linear Interpolated
+7,3.8666,Linear Interpolated
+8,3.8999,Bootstrapped (Epsilon)

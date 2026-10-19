@@ -1,0 +1,6 @@
+Bond,Maturity_Years,Annual_Coupon_Pct,Price_USD,YTM_Pct,Bootstrapped_Spot_Pct,Macaulay_Duration,Modified_Duration,Convexity
+Alpha,1,0.0,958.77,4.3003,4.3003,1.0,0.9588,1.8385
+Beta,2,0.0,922.78,4.1,4.1,2.0,1.9212,5.5367
+Gamma,3,4.0,1002.49,3.9104,3.9,2.8862,2.7776,10.5528
+Delta,5,3.5,986.07,3.8112,3.8001,4.6704,4.4989,25.4023
+Epsilon,8,4.5,1040.71,3.8979,3.8999,6.9182,6.6586,54.7855

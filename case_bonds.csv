@@ -1,0 +1,6 @@
+Bond,Maturity,Coupon,Price,Face_Value
+Alpha,1,0.0,958.77,1000.0
+Beta,2,0.0,922.78,1000.0
+Gamma,3,0.04,1002.49,1000.0
+Delta,5,0.035,986.07,1000.0
+Epsilon,8,0.045,1040.71,1000.0

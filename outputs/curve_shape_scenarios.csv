@@ -1,0 +1,11 @@
+Scenario,Bond,Maturity,Initial_Price,Repriced_Spot_Price,Price_Change_Pct
+"Steepening (-50bps short, +100bps long)",Alpha,1,958.77,963.3883,0.4817
+"Steepening (-50bps short, +100bps long)",Beta,2,922.78,927.8663,0.5512
+"Steepening (-50bps short, +100bps long)",Gamma,3,1002.49,1004.7932,0.2297
+"Steepening (-50bps short, +100bps long)",Delta,5,986.07,971.6841,-1.4589
+"Steepening (-50bps short, +100bps long)",Epsilon,8,1040.71,980.6839,-5.7678
+"Flattening (+100bps short, -50bps long)",Alpha,1,958.77,949.6649,-0.9497
+"Flattening (+100bps short, -50bps long)",Beta,2,922.78,909.0064,-1.4926
+"Flattening (+100bps short, -50bps long)",Gamma,3,1002.49,986.4429,-1.6007
+"Flattening (+100bps short, -50bps long)",Delta,5,986.07,978.4634,-0.7714
+"Flattening (+100bps short, -50bps long)",Epsilon,8,1040.71,1069.3381,2.7508
